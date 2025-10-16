@@ -1,10 +1,14 @@
-// src/routes/ProtectedRout.tsx
+import { ReactNode } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
-import type { ReactNode } from 'react'
 
+type Props = { children: ReactNode }
 
-export default function ProtectedRout({ children }: { children: ReactNode }) {
-    const { user } = useAuthStore()
-    return user ? children : <Navigate to="/login" />
+export default function ProtectedRoute({ children }: Props) {
+    const { user, loading } = useAuthStore((s) => s)
+
+    if (loading) return <p>Loading...</p> // показуємо лоадер поки Firebase перевіряє юзера
+    if (!user) return <Navigate to="/login" replace />
+
+    return <>{children}</>
 }

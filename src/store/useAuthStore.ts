@@ -1,17 +1,10 @@
 // src/store/useAuthStore.ts
 import { create } from 'zustand'
-import Cookies from 'js-cookie'
 import { auth } from '../firebaseConfig'
-import {
-    signInWithEmailAndPassword,
-    createUserWithEmailAndPassword,
-    signOut,
-    onAuthStateChanged
-} from 'firebase/auth'
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth'
 import type { User } from 'firebase/auth'
 
-// Тип користувача (спрощений)
-export type MyUser = {
+type MyUser = {
     uid: string
     email: string | null
     name?: string | null
@@ -26,64 +19,50 @@ type AuthState = {
     setUser: (user: MyUser | null) => void
 }
 
-// 🔹 Створюємо Zustand store
 export const useAuthStore = create<AuthState>((set) => ({
-    user: Cookies.get('user') ? JSON.parse(Cookies.get('user')!) : null,
+    user: null,
     loading: true,
 
-    // 🔹 Вхід
     login: async (email, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password)
         const firebaseUser = userCredential.user
-
-        const currentUser: MyUser = {
+        const user: MyUser = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            name: firebaseUser.displayName ?? null
+            name: firebaseUser.displayName,
         }
-
-        Cookies.set('user', JSON.stringify(currentUser))
-        set({ user: currentUser, loading: false })
+        set({ user, loading: false })
     },
 
-    // 🔹 Реєстрація
     register: async (email, password) => {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
         const firebaseUser = userCredential.user
-
-        const newUser: MyUser = {
+        const user: MyUser = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            name: firebaseUser.displayName ?? null
+            name: firebaseUser.displayName,
         }
-
-        Cookies.set('user', JSON.stringify(newUser))
-        set({ user: newUser, loading: false })
+        set({ user, loading: false })
     },
 
-    // 🔹 Вихід
     logout: async () => {
         await signOut(auth)
-        Cookies.remove('user')
         set({ user: null })
     },
 
-    // 🔹 Встановлення користувача вручну (для listener)
-    setUser: (user) => set({ user })
+    setUser: (user) => set({ user, loading: false }),
 }))
 
-// 🔹 Відстеження стану користувача при оновленні сторінки
-onAuthStateChanged(auth, (firebaseUser: User | null) => {
+// 🔹 Підписка на зміни авторизації при завантаженні сторінки
+onAuthStateChanged(auth, (firebaseUser) => {
     if (firebaseUser) {
         const user: MyUser = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            name: firebaseUser.displayName ?? null
+            name: firebaseUser.displayName,
         }
-        Cookies.set('user', JSON.stringify(user))
         useAuthStore.getState().setUser(user)
     } else {
-        Cookies.remove('user')
         useAuthStore.getState().setUser(null)
     }
 })
