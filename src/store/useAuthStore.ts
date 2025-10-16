@@ -2,7 +2,6 @@
 import { create } from 'zustand'
 import { auth } from '../firebaseConfig'
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth'
-import type { User } from 'firebase/auth'
 
 type MyUser = {
     uid: string
