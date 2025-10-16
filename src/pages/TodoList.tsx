@@ -1,15 +1,25 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import { useAuthStore } from '../store/useAuthStore'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
 import { CiEdit } from 'react-icons/ci'
+import { db } from '../firebaseConfig'
+import {
+    collection,
+    addDoc,
+    getDocs,
+    query,
+    where,
+    updateDoc,
+    deleteDoc,
+    doc,
+} from 'firebase/firestore'
 
 type Todo = {
-    id: number
+    id: string
     text: string
     completed: boolean
-    userId: number
+    userId: string
 }
 
 const TodoSchema = Yup.object().shape({
@@ -19,44 +29,58 @@ const TodoSchema = Yup.object().shape({
 export default function TodoList() {
     const { user, logout } = useAuthStore((s) => s)
     const [todos, setTodos] = useState<Todo[]>([])
-    const [editingId, setEditingId] = useState<number | null>(null)
+    const [editingId, setEditingId] = useState<string | null>(null)
 
-    // 🔹 Завантаження todos
+    // 🔹 Завантаження todos з Firestore
     useEffect(() => {
+        if (!user) return
+
         const fetchTodos = async () => {
-            if (!user) return
-            const res = await axios.get(`http://localhost:5000/todos?userId=${user.uid}`)
-            setTodos(res.data)
+            const q = query(collection(db, 'todos'), where('userId', '==', user.uid))
+            const snapshot = await getDocs(q)
+            const todosData: Todo[] = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                text: doc.data().text,
+                completed: doc.data().completed,
+                userId: doc.data().userId,
+            }))
+            setTodos(todosData)
         }
+
         fetchTodos()
     }, [user])
 
     // 🔹 Додавання нового завдання
     const addTodo = async (text: string) => {
         if (!user) return
-        const newTodo = { text, completed: false, userId: user.uid }
-        const res = await axios.post('http://localhost:5000/todos', newTodo)
-        setTodos([...todos, res.data])
+        const docRef = await addDoc(collection(db, 'todos'), {
+            text,
+            completed: false,
+            userId: user.uid,
+        })
+        setTodos([...todos, { id: docRef.id, text, completed: false, userId: user.uid }])
     }
 
     // 🔹 Редагування завдання
-    const updateTodo = async (id: number, text: string, completed?: boolean) => {
+    const updateTodo = async (id: string, text: string, completed?: boolean) => {
+        const todoRef = doc(db, 'todos', id)
         const todo = todos.find((t) => t.id === id)
         if (!todo) return
         const updatedTodo = { ...todo, text, completed: completed ?? todo.completed }
-        await axios.put(`http://localhost:5000/todos/${id}`, updatedTodo)
+        await updateDoc(todoRef, updatedTodo)
         setTodos((prev) => prev.map((t) => (t.id === id ? updatedTodo : t)))
         setEditingId(null)
     }
 
     // 🔹 Видалення завдання
-    const deleteTodo = async (id: number) => {
-        await axios.delete(`http://localhost:5000/todos/${id}`)
+    const deleteTodo = async (id: string) => {
+        const todoRef = doc(db, 'todos', id)
+        await deleteDoc(todoRef)
         setTodos((prev) => prev.filter((t) => t.id !== id))
     }
 
     // 🔹 Зміна статусу completed
-    const toggleCompleted = async (id: number) => {
+    const toggleCompleted = async (id: string) => {
         const todo = todos.find((t) => t.id === id)
         if (!todo) return
         await updateTodo(id, todo.text, !todo.completed)
