@@ -2,7 +2,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
 import { signInWithEmailAndPassword } from 'firebase/auth'
-import { auth } from 'firebase'
+import { auth } from '../firebaseConfig'
 
 const LoginSchema = Yup.object().shape({
     email: Yup.string()

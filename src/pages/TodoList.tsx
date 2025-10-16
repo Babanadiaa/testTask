@@ -25,7 +25,7 @@ export default function TodoList() {
     useEffect(() => {
         const fetchTodos = async () => {
             if (!user) return
-            const res = await axios.get(`http://localhost:5000/todos?userId=${user.id}`)
+            const res = await axios.get(`http://localhost:5000/todos?userId=${user.uid}`)
             setTodos(res.data)
         }
         fetchTodos()
@@ -34,7 +34,7 @@ export default function TodoList() {
     // 🔹 Додавання нового завдання
     const addTodo = async (text: string) => {
         if (!user) return
-        const newTodo = { text, completed: false, userId: user.id }
+        const newTodo = { text, completed: false, userId: user.uid }
         const res = await axios.post('http://localhost:5000/todos', newTodo)
         setTodos([...todos, res.data])
     }

@@ -1,9 +1,10 @@
-// src/routes/ProtectedRoute.tsx
+// src/routes/ProtectedRout.tsx
 import { Navigate } from 'react-router-dom'
 import { useAuthStore } from '../store/useAuthStore'
+import type { ReactNode } from 'react'
 
 
-export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-    const token = useAuthStore((s) => s.token)
-    return token ? children : <Navigate to="/login" replace />
+export default function ProtectedRout({ children }: { children: ReactNode }) {
+    const { user } = useAuthStore()
+    return user ? children : <Navigate to="/login" />
 }

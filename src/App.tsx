@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 
-import { ProtectedRoute } from './routes/ProtectedRout'
+import ProtectedRoute from "./routes/ProtectedRout"
 
 import Login from './pages/Login'
 import Register from './pages/Register'

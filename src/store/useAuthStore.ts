@@ -1,3 +1,4 @@
+// src/store/useAuthStore.ts
 import { create } from 'zustand'
 import Cookies from 'js-cookie'
 import { auth } from '../firebaseConfig'
@@ -5,24 +6,24 @@ import {
     signInWithEmailAndPassword,
     createUserWithEmailAndPassword,
     signOut,
-    onAuthStateChanged,
-    User as FirebaseUser,
+    onAuthStateChanged
 } from 'firebase/auth'
+import type { User } from 'firebase/auth'
 
 // Тип користувача (спрощений)
-type User = {
+export type MyUser = {
     uid: string
     email: string | null
     name?: string | null
 }
 
 type AuthState = {
-    user: User | null
+    user: MyUser | null
     loading: boolean
     login: (email: string, password: string) => Promise<void>
     register: (email: string, password: string) => Promise<void>
     logout: () => Promise<void>
-    setUser: (user: User | null) => void
+    setUser: (user: MyUser | null) => void
 }
 
 // 🔹 Створюємо Zustand store
@@ -33,12 +34,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     // 🔹 Вхід
     login: async (email, password) => {
         const userCredential = await signInWithEmailAndPassword(auth, email, password)
-        const user = userCredential.user
+        const firebaseUser = userCredential.user
 
-        const currentUser: User = {
-            uid: user.uid,
-            email: user.email,
-            name: user.displayName,
+        const currentUser: MyUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName ?? null
         }
 
         Cookies.set('user', JSON.stringify(currentUser))
@@ -48,12 +49,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     // 🔹 Реєстрація
     register: async (email, password) => {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password)
-        const user = userCredential.user
+        const firebaseUser = userCredential.user
 
-        const newUser: User = {
-            uid: user.uid,
-            email: user.email,
-            name: user.displayName,
+        const newUser: MyUser = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            name: firebaseUser.displayName ?? null
         }
 
         Cookies.set('user', JSON.stringify(newUser))
@@ -68,16 +69,16 @@ export const useAuthStore = create<AuthState>((set) => ({
     },
 
     // 🔹 Встановлення користувача вручну (для listener)
-    setUser: (user) => set({ user }),
+    setUser: (user) => set({ user })
 }))
 
 // 🔹 Відстеження стану користувача при оновленні сторінки
-onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
+onAuthStateChanged(auth, (firebaseUser: User | null) => {
     if (firebaseUser) {
-        const user: User = {
+        const user: MyUser = {
             uid: firebaseUser.uid,
             email: firebaseUser.email,
-            name: firebaseUser.displayName,
+            name: firebaseUser.displayName ?? null
         }
         Cookies.set('user', JSON.stringify(user))
         useAuthStore.getState().setUser(user)
