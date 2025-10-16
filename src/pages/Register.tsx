@@ -4,9 +4,6 @@ import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
 
 const RegisterSchema = Yup.object().shape({
-    name: Yup.string()
-        .min(2, 'Мінімум 2 символи')
-        .required('Ім’я обов’язкове'),
     email: Yup.string()
         .email('Невірний email')
         .required('Email обов’язковий'),
@@ -23,14 +20,14 @@ export default function Register() {
         <section className="h-screen flex items-center justify-center bg-gray-100 text-black">
             <div className="bg-white p-8 rounded shadow-md w-full max-w-md">
                 <Formik
-                    initialValues={{ name: '', email: '', password: '' }}
+                    initialValues={{ email: '', password: '' }}
                     validationSchema={RegisterSchema}
                     onSubmit={async (values, { setSubmitting, setErrors }) => {
                         try {
-                            await register(values.name, values.email, values.password)
+                            await register(values.email, values.password)
                             navigate('/todo')
                         } catch (err: any) {
-                            setErrors({ email: err.message })
+                            setErrors({ email: err.message || 'Помилка при реєстрації' })
                         } finally {
                             setSubmitting(false)
                         }
@@ -40,26 +37,14 @@ export default function Register() {
                         <Form className="space-y-4 flex flex-col">
                             <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
 
-                            <label htmlFor="name">Name</label>
-                            <Field
-                                type="text"
-                                id="name"
-                                name="name"
-                                placeholder="Vasya Pupkin"
-                                className="w-full border border-gray-300 p-2 rounded-xl"
-                            />
-                            <ErrorMessage
-                                name="name"
-                                component="div"
-                                className="text-red-500 text-sm mt-1"
-                            />
-
-                            <label htmlFor="email">Email</label>
+                            <label htmlFor="email" className="block text-sm font-medium mb-1">
+                                Email
+                            </label>
                             <Field
                                 type="email"
                                 id="email"
                                 name="email"
-                                placeholder="VasyaPupkin@gmail.com"
+                                placeholder="example@gmail.com"
                                 className="w-full border border-gray-300 p-2 rounded-xl"
                             />
                             <ErrorMessage
@@ -68,7 +53,9 @@ export default function Register() {
                                 className="text-red-500 text-sm mt-1"
                             />
 
-                            <label htmlFor="password">Password</label>
+                            <label htmlFor="password" className="block text-sm font-medium mb-1">
+                                Password
+                            </label>
                             <Field
                                 type="password"
                                 id="password"

@@ -1,7 +1,8 @@
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuthStore } from '../store/useAuthStore'
 import { Formik, Form, Field, ErrorMessage } from 'formik'
 import * as Yup from 'yup'
+import { signInWithEmailAndPassword } from 'firebase/auth'
+import { auth } from 'firebase'
 
 const LoginSchema = Yup.object().shape({
     email: Yup.string()
@@ -9,12 +10,11 @@ const LoginSchema = Yup.object().shape({
         .required('Email обов’язковий'),
     password: Yup.string()
         .min(6, 'Мінімум 6 символів')
-        .required('Пароль обов’язковий')
+        .required('Пароль обов’язковий'),
 })
 
 export default function Login() {
     const navigate = useNavigate()
-    const { login } = useAuthStore((s) => s)
 
     return (
         <section className="h-screen flex items-center justify-center bg-gray-100 text-black">
@@ -26,9 +26,17 @@ export default function Login() {
                     validationSchema={LoginSchema}
                     onSubmit={async (values, { setSubmitting, setErrors }) => {
                         try {
-                            await login(values.email, values.password)
+                            // 🔥 Авторизація через Firebase
+                            const userCredential = await signInWithEmailAndPassword(
+                                auth,
+                                values.email,
+                                values.password
+                            )
+
+                            console.log('Logged in:', userCredential.user)
                             navigate('/todo')
                         } catch (err: any) {
+                            console.error('Login error:', err)
                             setErrors({ email: 'Невірний email або пароль' })
                         } finally {
                             setSubmitting(false)
